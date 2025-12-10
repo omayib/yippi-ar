@@ -1,0 +1,541 @@
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+    <script src="https://confettijs.org/confetti.min.js"></script>
+    <script>
+        // 1. FLATTENED REWARDS DATA
+        const rewards = [
+            { type: "diskon", message: "Diskon 20% secured! Menyala abangkuh 🔥" },
+            { type: "diskon", message: "Dapet diskon 10%, lumayan buat jajan lucu." },
+            { type: "diskon", message: "Dapet diskon 5% aja yaa.." },
+            { type: "diskon", message: "Diskon 10% nih buat kamu.." },
+            { type: "koin", message: "Koin 2k dapet! OTW tukar Kiddy gratis." },
+            { type: "koin", message: "Dapet Koin 2k! OTW tukar Kiddy gratis." },
+            { type: "cashback", message: "Selamat! Cashback Rp 4.000, auto senyum." },
+            { type: "cashback", message: "Cashback Rp 6.000, Pamerin ke temenmu gih!" },
+            { type: "merch", message: "Gokil! Dapet Totebag Yippi gratis. Slay abis!" },
+            { type: "merch", message: "Sticker pack lucu secured! Tempel di laptop biar skena." },
+            { type: "merch", message: "Dapet gantungan kunci limited edition! Kece parah." },
+            { type: "bogo", message: "Buy 1 Get 1 Alert! Ajak doi atau bestie sekarang." },
+            { type: "bogo", message: "Promo BOGO aktif! Perut kenyang, dompet tenang." },
+            { type: "bogo", message: "Beli 1 Gratis 1! Spill ke temen-temen lo sekarang." },
+            { type: "secret", message: "Ssst... Kamu unlock Secret Menu! Tunjukin ke kasir." },
+            { type: "secret", message: "Rare item found! Cobain menu rahasia kita yang gak ada di daftar." },
+            { type: "secret", message: "Privilege unlocked: Akses menu rahasia Yippi." },
+            { type: "voucher", message: "Cuan alert! Voucher Rp 10.000 tanpa minimum spend." },
+            { type: "voucher", message: "Rejeki anak soleh, dapet potongan ceban (10k)!" },
+            { type: "voucher", message: "Voucher 5k lumayan buat nambahin parkir." },
+            { type: "zonk", message: "Selamat! Kamu mendapatkan... Hikmahnya aja ya 😂" },
+            { type: "zonk", message: "Zonk! Cuma dapet salam dari admin. Semangat bestie!" },
+            { type: "zonk", message: "Dapet angin segar doang. Coba scan yang lain!" },
+            { type: "zonk", message: "Ups kosong. Anggap aja sedekah jari buat nge-klik." },
+            { type: "zonk", message: "Hampir dapet! Tapi boong... coba lagi ya 😆" },
+            { type: "zonk", message: "Waduh, jempolnya kurang wangi nih. Spin lagi!" },
+            { type: "zonk", message: "Zonk alert! Jangan nyerah, rejeki gak kemana." },
+            { type: "zonk", message: "Kurang beruntung, coba minta doa restu orang tua dulu." },
+            { type: "zonk", message: "Misi gagal! Coba lagi besok (atau sekarang juga boleh)." },
+            { type: "zonk", message: "Yah... zonk. Anggap aja latihan senam jari." },
+            { type: "zonk", message: "Belum rejeki. Tetap slay walau dapet zonk." },
+            { type: "zonk", message: "Ups! Kosong melompong. Yuk gas lagi!" },
+            { type: "zonk", message: "Sabar ya bestie, ini ujian kesabaran." },
+            { type: "zonk", message: "Zonk lagi? Tenang, kegagalan adalah awal dari coba lagi." },
+            { type: "zonk", message: "Dapet... hikmahnya. Sabar ya!" },
+            { type: "zonk", message: "Maaf, hadiahnya lagi ngumpet. Cari lagi yuk!" },
+            { type: "zonk", message: "Anda belum beruntung. Coba lagi 100x lagi!" },
+            { type: "zonk", message: "Zonk! Jangan banting HP ya, sayang lho." },
+            { type: "zonk", message: "Coba lagi! Semangat 45 jangan kasih kendor." },
+            { type: "zonk", message: "Hari ini belum hoki, siapa tau 5 detik lagi hoki?" }
+        ];
+
+        // 2. HELPER: PICK RANDOM REWARD
+        function getRandomReward() {
+            const randomIndex = Math.floor(Math.random() * rewards.length);
+            return rewards[randomIndex];
+        }
+
+        // 3. CENTRAL LOGIC TO SHOW OVERLAY
+        function showReward(rewardObj) {
+            const overlay = document.getElementById("message-overlay");
+            const titleEl = document.getElementById("overlay-title");
+            const bodyEl = document.getElementById("overlay-body");
+            const btnEl = document.getElementById("close-button");
+
+            let titleText = "Kejutan!";
+            let titleColor = "#333";
+
+            switch (rewardObj.type) {
+                case 'diskon': titleText = "Diskon Alert!"; titleColor = "#ff4081"; break;
+                case 'koin': titleText = "Coin Hunter!"; titleColor = "#FFD700"; break;
+                case 'cashback': titleText = "Cashback!"; titleColor = "#4CAF50"; break;
+                case 'merch': titleText = "Merch Drop!"; titleColor = "#9C27B0"; break;
+                case 'bogo': titleText = "Buy 1 Get 1!"; titleColor = "#FF5722"; break;
+                case 'secret': titleText = "Secret Unlocked!"; titleColor = "#E91E63"; break;
+                case 'voucher': titleText = "Voucher!"; titleColor = "#2196F3"; break;
+                case 'zonk': titleText = "Ups..."; titleColor = "#607D8B"; break;
+            }
+
+            titleEl.innerText = titleText;
+            titleEl.style.color = titleColor;
+            bodyEl.innerText = rewardObj.message;
+
+            if (rewardObj.type === 'zonk') {
+                btnEl.innerText = 'Tutup';
+            } else {
+                btnEl.innerText = 'Klaim di WA';
+            }
+
+            btnEl.onclick = function () {
+                const msg = encodeURIComponent(
+                    `Halo kak, saya dapat ${rewardObj.type.toUpperCase()}: "${rewardObj.message}" a.n. `
+                );
+                if (rewardObj.type !== 'zonk') {
+                    window.open(`https://wa.me/6289626146054?text=${msg}`, '_blank');
+                }
+                overlay.style.display = "none";
+            };
+
+            overlay.style.display = "flex";
+        }
+
+        // --- HELPER: EXPLOSION EFFECT ---
+        function createExplosion(targetEl) {
+            // We attach the explosion to the same parent as the dynamite so it appears at the same spot
+            const parent = targetEl.parentNode;
+
+            // Create a container for the explosion parts
+            const explosion = document.createElement('a-entity');
+            explosion.setAttribute('position', '0 0 0');
+
+            // Part 1: Inner Flash (Yellow/White - expands fast)
+            const flash = document.createElement('a-sphere');
+            flash.setAttribute('radius', '0.05');
+            flash.setAttribute('color', '#FFF700'); // Bright Yellow
+            flash.setAttribute('material', 'shader: flat; transparent: true; opacity: 1');
+            flash.setAttribute('animation__scale', 'property: scale; to: 15 15 15; dur: 200; easing: easeOutExpo');
+            flash.setAttribute('animation__fade', 'property: material.opacity; to: 0; dur: 200; easing: linear');
+
+            // Part 2: Outer Blast (Red/Orange - expands slightly slower)
+            const blast = document.createElement('a-sphere');
+            blast.setAttribute('radius', '0.1');
+            blast.setAttribute('color', '#FF4500'); // OrangeRed
+            blast.setAttribute('material', 'shader: flat; transparent: true; opacity: 0.7');
+            blast.setAttribute('animation__scale', 'property: scale; to: 10 10 10; dur: 400; easing: easeOutQuad');
+            blast.setAttribute('animation__fade', 'property: material.opacity; to: 0; dur: 400; easing: linear');
+
+            explosion.appendChild(flash);
+            explosion.appendChild(blast);
+            parent.appendChild(explosion);
+
+            // Clean up: Remove the explosion entity after animation finishes
+            setTimeout(() => {
+                if (parent.contains(explosion)) {
+                    parent.removeChild(explosion);
+                }
+            }, 500);
+        }
+        // --- COMPONENT: BOX LOGIC ---
+        AFRAME.registerComponent('box-opener', {
+            init: function () {
+                const el = this.el;
+                const lid = document.querySelector("#lid-group");
+                const envelope = document.querySelector("#envelope");
+                let isOpen = false;
+                let lastClickTime = 0;
+
+                el.addEventListener('click', () => {
+                    const currentTime = new Date().getTime();
+                    const timeDiff = currentTime - lastClickTime;
+                    if (isOpen) {
+                        lid.emit('close-box');
+                        envelope.emit('hide-envelope');
+                        isOpen = false;
+                    } else {
+                        if (timeDiff < 300 && timeDiff > 0) {
+                            lid.emit('open-box');
+                            envelope.emit('rise-envelope');
+                            triggerConfetti();
+                            isOpen = true;
+                        }
+                    }
+                    lastClickTime = currentTime;
+                });
+                envelope.addEventListener('click', function (evt) {
+                    evt.stopPropagation();
+                    showReward(getRandomReward());
+                });
+            }
+        });
+
+        AFRAME.registerComponent('box-opener2', {
+            init: function () {
+                const el = this.el;
+                const lid = document.querySelector("#lid-group2");
+                const envelope = document.querySelector("#envelope2");
+                let isOpen = false;
+                let lastClickTime = 0;
+
+                el.addEventListener('click', () => {
+                    const currentTime = new Date().getTime();
+                    const timeDiff = currentTime - lastClickTime;
+                    if (isOpen) {
+                        lid.emit('close-box2');
+                        envelope.emit('hide-envelope2');
+                        isOpen = false;
+                    } else {
+                        if (timeDiff < 300 && timeDiff > 0) {
+                            lid.emit('open-box2');
+                            envelope.emit('rise-envelope2');
+                            triggerConfetti();
+                            isOpen = true;
+                        }
+                    }
+                    lastClickTime = currentTime;
+                });
+                envelope.addEventListener('click', function (evt) {
+                    evt.stopPropagation();
+                    showReward(getRandomReward());
+                });
+            }
+        });
+
+        // --- COMPONENT: DYNAMIT LOGIC (Updated) ---
+        AFRAME.registerComponent('dynamit-controller', {
+            init: function () {
+                const el = this.el;
+                let isCollected = false;
+                el.addEventListener('click', function () {
+                    if (isCollected) return;
+
+                    // 1. Spin the dynamite
+                    el.setAttribute('animation', 'property: rotation; to: 0 1080 0; dur: 500; easing: easeInQuad');
+
+                    // 2. Trigger Boom & Shrink
+                    setTimeout(() => {
+                        createExplosion(el); // <--- Trigger the visual effect here
+                        el.setAttribute('animation__shrink', 'property: scale; to: 0 0 0; dur: 300; easing: easeInBack');
+                    }, 500);
+
+                    // 3. Show Reward
+                    setTimeout(() => {
+                        showReward(getRandomReward());
+                    }, 800);
+
+                    isCollected = true;
+                });
+            }
+        });
+
+
+        // --- COMPONENT: COIN LOGIC ---
+        AFRAME.registerComponent('coin-collector', {
+            init: function () {
+                const el = this.el;
+                let isCollected = false;
+                el.addEventListener('click', function () {
+                    if (isCollected) return;
+                    el.setAttribute('animation', 'property: rotation; to: 0 1080 0; dur: 500; easing: easeInQuad');
+                    setTimeout(() => {
+                        el.setAttribute('animation__shrink', 'property: scale; to: 0 0 0; dur: 300; easing: easeInBack');
+                    }, 500);
+                    setTimeout(() => {
+                        showReward(getRandomReward());
+                    }, 800);
+                    isCollected = true;
+                });
+            }
+        });
+
+        // --- COMPONENT: CASHBACK LOGIC ---
+        AFRAME.registerComponent('cashback-collector', {
+            init: function () {
+                const el = this.el;
+                let isCollected = false;
+                el.addEventListener('click', function () {
+                    if (isCollected) return;
+                    el.setAttribute('animation', 'property: rotation; to: 0 360 0; dur: 600; easing: easeOutBack');
+                    triggerConfetti();
+                    setTimeout(() => {
+                        showReward(getRandomReward());
+                    }, 600);
+                    isCollected = true;
+                });
+            }
+        });
+
+        function triggerConfetti() {
+            const confettiTrigger = document.getElementById('confetti-trigger');
+            if (confettiTrigger) {
+                const event = new MouseEvent('click', { bubbles: true });
+                confettiTrigger.dispatchEvent(event);
+            }
+        }
+    </script>
+    <style>
+        body {
+            margin: 0;
+            font-family: sans-serif;
+        }
+
+        .example-container {
+            overflow: hidden;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        #message-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .message-box {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 80%;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .message-box h2 {
+            margin-top: 0;
+            font-size: 24px;
+        }
+
+        .message-box p {
+            color: #555;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .close-btn {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .instructions-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 10px;
+            z-index: 10;
+            pointer-events: none;
+            text-align: left;
+        }
+
+        .instructions-overlay ol {
+            margin: 0;
+            padding-left: 20px;
+            font-size: 14px;
+        }
+
+        .logo-overlay {
+            position: relative;
+            top: 10;
+            left: 10;
+            width: 10%;
+            height: auto;
+            margin: 10px;
+            max-width: 75px;
+            min-width: 75px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="example-container">
+
+        <div id="message-overlay">
+            <div class="message-box">
+                <h2 id="overlay-title">Hadiah!</h2>
+                <p id="overlay-body">...</p>
+                <button class="close-btn" id="close-button">Klaim di W.A.</button>
+            </div>
+        </div>
+
+        <div class="logo-overlay">
+            <img src="./assets/yippi-logo.png" alt="Logo">
+        </div>
+
+        <div class="instructions-overlay">
+            <strong>Cara bermain :</strong>
+            <ol>
+                <li>Nyalakan screen recorder</li>
+                <li>Scan benda di toko Yippi!</li>
+                <li>Ketuk hadiah yang muncul</li>
+                <li>Ketuk tombol klaim</li>
+                <li>Matikan screen recorder</li>
+                <li>Bagikan ke Tiktok / IG @yippiyuk</li>
+            </ol>
+        </div>
+
+        <div id="confetti-trigger" style="position: fixed; top: 50%; left: 50%; width: 1px; height: 1px;"></div>
+        <script>
+            window.addEventListener('DOMContentLoaded', function () {
+                const confetti = new Confetti('confetti-trigger');
+                confetti.setCount(75);
+                confetti.setSize(1);
+            });
+        </script>
+
+        <a-scene id="main-scene" mindar-image="imageTargetSrc: ./targets.mind; filterMinCF: 0.0001; filterBeta: 0.001;"
+            color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false"
+            device-orientation-permission-ui="enabled: false">
+
+            <a-assets>
+                <img id="gift-pattern" src="./assets/gift-pattern.jpg" />
+                <img id="gift-pattern2" src="./assets/gift-pattern2.jpg" />
+                <img id="coin-face" src="./assets/coin-face.png" />
+                <img id="cashback-img" src="./assets/indonesian-rupiah.png" />
+                <img id="dynamit-img" src="./assets/dynamit.png" />
+            </a-assets>
+
+            <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;"
+                raycaster="far: 10000; objects: .clickable"></a-camera>
+
+        </a-scene>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const scene = document.querySelector('#main-scene');
+
+                // 1. DEFINE THE TEMPLATES FOR YOUR 3D OBJECTS
+                // Note: We use template strings (backticks) to store the HTML structure.
+
+                const box1HTML = `
+                    <a-box id="box-base" class="clickable" position="0 0 0" scale="0.5 0.5 0.5"
+                        material="src: #gift-pattern; roughness: 1">
+                        <a-box color="#FFD700" position="0 0 0" scale="1.01 1.01 0.15" material="roughness: 0.3; metalness: 0.8"></a-box>
+                        <a-box color="#FFD700" position="0 0 0" scale="0.15 1.01 1.01" material="roughness: 0.3; metalness: 0.8"></a-box>
+                    </a-box>
+                    <a-box id="envelope" class="clickable" position="0 0 0" scale="0.4 0.3 0.02" color="#f0f0f0"
+                        rotation="180 0 45"
+                        animation__rise="property: position; to: 0 0.5 0; dur: 1000; startEvents: rise-envelope"
+                        animation__hide="property: position; to: 0 0 0; dur: 500; startEvents: hide-envelope">
+                    </a-box>
+                    <a-entity id="lid-group" position="0 0.25 -0.25"
+                        animation__open="property: rotation; to: -90 0 0; dur: 1000; startEvents: open-box"
+                        animation__close="property: rotation; to: 0 0 0; dur: 500; startEvents: close-box">
+                        <a-box id="box-lid" class="clickable" position="0 0 0.25" scale="0.52 0.08 0.52"
+                            material="src: #gift-pattern; roughness: 1">
+                            <a-box color="#FFD700" position="0 0 0" scale="1.01 1.02 0.15" material="roughness: 0.3; metalness: 0.8"></a-box>
+                            <a-box color="#FFD700" position="0 0 0" scale="0.15 1.02 1.01" material="roughness: 0.3; metalness: 0.8"></a-box>
+                        </a-box>
+                    </a-entity>
+                `;
+
+                const box2HTML = `
+                    <a-box id="box-base" class="clickable" position="0 0 0" scale="0.5 0.5 0.5"
+                        material="src: #gift-pattern2; roughness: 1">
+                        <a-box color="#FFD700" position="0 0 0" scale="1.01 1.01 0.15" material="roughness: 0.3; metalness: 0.8"></a-box>
+                        <a-box color="#FFD700" position="0 0 0" scale="0.15 1.01 1.01" material="roughness: 0.3; metalness: 0.8"></a-box>
+                    </a-box>
+                    <a-box id="envelope2" class="clickable" position="0 0 0" scale="0.4 0.3 0.02" color="#f0f0f0"
+                        rotation="180 0 45"
+                        animation__rise="property: position; to: 0 0.5 0; dur: 1000; startEvents: rise-envelope2"
+                        animation__hide="property: position; to: 0 0 0; dur: 500; startEvents: hide-envelope2">
+                    </a-box>
+                    <a-entity id="lid-group2" position="0 0.25 -0.25"
+                        animation__open="property: rotation; to: -90 0 0; dur: 1000; startEvents: open-box2"
+                        animation__close="property: rotation; to: 0 0 0; dur: 500; startEvents: close-box2">
+                        <a-box id="box-lid" class="clickable" position="0 0 0.25" scale="0.52 0.08 0.52"
+                            material="src: #gift-pattern2; roughness: 1">
+                            <a-box color="#FFD700" position="0 0 0" scale="1.01 1.02 0.15" material="roughness: 0.3; metalness: 0.8"></a-box>
+                            <a-box color="#FFD700" position="0 0 0" scale="0.15 1.02 1.01" material="roughness: 0.3; metalness: 0.8"></a-box>
+                        </a-box>
+                    </a-entity>
+                `;
+
+                const coinHTML = `
+                    <a-entity position="0 0 0"
+                        animation="property: rotation; to: 0 360 0; loop: true; dur: 3000; easing: linear">
+                        <a-cylinder class="clickable" coin-collector color="#FFD700" height="0.1" radius="0.4"
+                            rotation="90 0 0" material="metalness: 0.8; roughness: 0.3">
+                        </a-cylinder>
+                        <a-cylinder src="#coin-face" height="0.11" radius="0.3" rotation="90 0 0"
+                            material="transparent: true">
+                        </a-cylinder>
+                    </a-entity>
+                `;
+
+                const cashbackHTML = `
+                    <a-entity position="0 0 0"
+                        animation="property: position; to: 0 0.1 0; dir: alternate; dur: 2000; loop: true">
+                        <a-box class="clickable" cashback-collector depth="0.05" height="0.6" width="1"
+                            material="transparent: true; opacity: 0">
+                            <a-image src="#cashback-img" position="0 0 0.03" scale="0.5 0.5 1"></a-image>
+                        </a-box>
+                    </a-entity>
+                `;
+
+                const boomHTML = `
+
+                    <a-entity position="0 0 0"
+                        animation="property: position; to: 0 0.1 0; dir: alternate; dur: 2000; loop: true">
+                        <a-box class="clickable" dynamit-controller depth="0.05" height="0.6" width="1"
+                            material="transparent: true; opacity: 0">
+                            <a-image src="#dynamit-img" position="0 0 0.03" scale="0.5 0.5 1"></a-image>
+                        </a-box>
+                    </a-entity>
+                `;
+
+                // 2. CREATE THE POOL OF CONTENT OBJECTS
+                // We map the HTML strings to their required attributes (like the component name)
+                const contentPool = [
+                    { html: box1HTML, component: 'box-opener' },       // The unique Box 1
+                    { html: box2HTML, component: 'box-opener2' },      // The unique Box 2
+                    { html: coinHTML, component: null },               // Coin 1
+                    { html: coinHTML, component: null },               // Coin 2
+                    { html: cashbackHTML, component: null },           // Cashback 1
+                    { html: cashbackHTML, component: null },           // Cashback 2
+                    { html: boomHTML, component: null },           // boomHTML 
+                    { html: boomHTML, component: null }            // boomHTML
+                ];
+
+                // 3. SHUFFLE THE POOL (Fisher-Yates Shuffle)
+                for (let i = contentPool.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [contentPool[i], contentPool[j]] = [contentPool[j], contentPool[i]];
+                }
+
+                // 4. INJECT INTO SCENE
+                // We create 8 targets (index 0 to 7) and assign the shuffled content
+                for (let i = 0; i < 8; i++) {
+                    const entity = document.createElement('a-entity');
+                    entity.setAttribute('mindar-image-target', `targetIndex: ${i}`);
+
+                    // Add specific component if the content requires it on the parent (like box-opener)
+                    if (contentPool[i].component) {
+                        entity.setAttribute(contentPool[i].component, "");
+                    }
+
+                    entity.innerHTML = contentPool[i].html;
+                    scene.appendChild(entity);
+                }
+            });
+        </script>
+    </div>
+</body>
+
+</html>
