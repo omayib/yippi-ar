@@ -6,6 +6,94 @@
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     <script src="https://confettijs.org/confetti.min.js"></script>
     <script>
+        let pendingReward = null; // Store the reward temporarily while user logs in
+        async function realApiCheckIn(phoneNumber) {
+            const API_URL = "https://script.google.com/macros/s/AKfycbyLUYzWHFLu_MkQ28nyMuz92_j6V_flUFlLPJ3Jn17aTyF0JIeVi8TbKm_gVOifY3LQ/exec"; // Paste your URL here
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: "POST",
+                    body: JSON.stringify({ phoneNumber: phoneNumber })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    console.log("Check-in successful!");
+                    return { success: true };
+                } else {
+                    console.log(result.message);
+                    return { success: false, message: result.message };
+                }
+
+            } catch (error) {
+                console.error("API Error:", error);
+                return { success: false, message: "Connection Error" };
+            }
+        }
+        function triggerRewardSequence() {
+            const reward = getRandomReward();
+
+            // Open the phone modal instead of the reward immediately
+            const phoneOverlay = document.getElementById("phone-overlay");
+            const phoneInput = document.getElementById("input-phone");
+            const errorMsg = document.getElementById("phone-error");
+
+            // Clear previous states
+            phoneInput.value = "";
+            errorMsg.style.display = "none";
+            pendingReward = reward; // Save reward for after login
+
+            phoneOverlay.style.display = "flex";
+        }
+
+        // --- EVENT LISTENERS (Updated for Async) ---
+        document.addEventListener("DOMContentLoaded", () => {
+            const phoneOverlay = document.getElementById("phone-overlay");
+            const btnCheck = document.getElementById("btn-check-phone");
+            const btnCancel = document.getElementById("btn-cancel-phone");
+            const errorMsg = document.getElementById("phone-error");
+            const inputPhone = document.getElementById("input-phone");
+
+            // Use 'async' here because we have to wait for the server
+            btnCheck.onclick = async function () {
+                const phone = inputPhone.value.trim();
+
+                // Basic Validation
+                if (!phone || phone.length < 8) {
+                    errorMsg.innerText = "Nomor HP tidak valid!";
+                    errorMsg.style.display = "block";
+                    return;
+                }
+
+                // --- 1. UI: SHOW LOADING SPINNER ---
+                const originalText = btnCheck.innerText; // Save "Cek Keberuntungan"
+                btnCheck.disabled = true;
+                // Inject the spinner HTML + Text
+                btnCheck.innerHTML = '<div class="loader"></div> Mengecek...';
+                errorMsg.style.display = "none";
+
+                // --- 2. CALL REAL API ---
+                const result = await realApiCheckIn(phone);
+
+                // --- 3. UI: RESTORE BUTTON ---
+                btnCheck.disabled = false;
+                btnCheck.innerText = originalText; // Put back original text
+
+                // --- 4. HANDLE RESULT ---
+                if (result.success) {
+                    phoneOverlay.style.display = "none";
+                    showReward(pendingReward);
+                } else {
+                    errorMsg.innerText = result.message;
+                    errorMsg.style.display = "block";
+                }
+            };
+
+            btnCancel.onclick = function () {
+                phoneOverlay.style.display = "none";
+            };
+        });
         // 1. FLATTENED REWARDS DATA
         const rewards = [
             { type: "diskon", message: "Diskon 20% secured! Menyala abangkuh 🔥" },
@@ -164,7 +252,7 @@
                 });
                 envelope.addEventListener('click', function (evt) {
                     evt.stopPropagation();
-                    showReward(getRandomReward());
+                    triggerRewardSequence();
                 });
             }
         });
@@ -196,7 +284,7 @@
                 });
                 envelope.addEventListener('click', function (evt) {
                     evt.stopPropagation();
-                    showReward(getRandomReward());
+                    triggerRewardSequence();
                 });
             }
         });
@@ -220,7 +308,7 @@
 
                     // 3. Show Reward
                     setTimeout(() => {
-                        showReward(getRandomReward());
+                        triggerRewardSequence();
                     }, 800);
 
                     isCollected = true;
@@ -241,7 +329,7 @@
                         el.setAttribute('animation__shrink', 'property: scale; to: 0 0 0; dur: 300; easing: easeInBack');
                     }, 500);
                     setTimeout(() => {
-                        showReward(getRandomReward());
+                        triggerRewardSequence();
                     }, 800);
                     isCollected = true;
                 });
@@ -258,7 +346,7 @@
                     el.setAttribute('animation', 'property: rotation; to: 0 360 0; dur: 600; easing: easeOutBack');
                     triggerConfetti();
                     setTimeout(() => {
-                        showReward(getRandomReward());
+                        triggerRewardSequence();
                     }, 600);
                     isCollected = true;
                 });
@@ -360,12 +448,77 @@
             max-width: 75px;
             min-width: 75px;
         }
+
+        #phone-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            /* Higher than message overlay */
+        }
+
+        #input-phone {
+            width: 80%;
+            padding: 10px;
+            font-size: 18px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+
+        .loader {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            /* Light transparent white */
+            border-radius: 50%;
+            border-top: 3px solid #ffffff;
+            /* Solid white */
+            width: 16px;
+            height: 16px;
+            -webkit-animation: spin 1s linear infinite;
+            /* Safari */
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
+            /* Space between spinner and text */
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
 
 <body>
     <div class="example-container">
+        <div id="phone-overlay">
+            <div class="message-box">
+                <h2>Satu Langkah Lagi!</h2>
+                <p>Masukkan nomor HP kamu untuk klaim hadiah harianmu.</p>
 
+                <input type="tel" id="input-phone" placeholder="Contoh: 08123456789" maxlength="15">
+                <p id="phone-error" style="color: red; display: none; font-size: 12px; margin-top:5px;"></p>
+
+                <button class="close-btn" id="btn-check-phone" style="background: #2196F3; margin-top: 10px;">Cek
+                    Keberuntungan</button>
+                <button class="close-btn" id="btn-cancel-phone"
+                    style="background: #ccc; margin-top: 5px; font-size: 12px;">Batal</button>
+            </div>
+        </div>
         <div id="message-overlay">
             <div class="message-box">
                 <h2 id="overlay-title">Hadiah!</h2>
